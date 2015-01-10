@@ -12,6 +12,10 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 # TODO: logging
 
+# TODO: separar código do Celery e Task
+
+# TODO: redirecionamentos
+
 from PyQt4.QtCore import QTimer, pyqtSignal, QObject, QSize, QUrl, QString
 from PyQt4.QtGui import QApplication, QImage, QPainter
 
@@ -202,8 +206,6 @@ class WarcNetworkReply(QNetworkReply):
     # aguardar headers para checar se CT permite cache
     #
     # processar HTML para reconstruir URLs apontando para cache
-    #
-    # implementar todos os sinais necessários
 
 class WarcNetworkAccessManager(QNetworkAccessManager):
     timeout = pyqtSignal()
