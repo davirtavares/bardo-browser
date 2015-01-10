@@ -4,17 +4,22 @@ import os
 import re
 from tempfile import TemporaryFile
 from datetime import datetime
+import signal
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 # TODO: usar Qt5
 
-from PyQt4.QtCore import QTimer, pyqtSignal, QObject, QSize, QUrl
+# TODO: logging
+
+from PyQt4.QtCore import QTimer, pyqtSignal, QObject, QSize, QUrl, QString
 from PyQt4.QtGui import QApplication, QImage, QPainter
 
 from PyQt4.QtNetwork import QNetworkRequest, \
         QNetworkReply, \
         QNetworkAccessManager
 
-from PyQt4.QtWebKit import QWebView
+from PyQt4.QtWebKit import QWebView, QWebPage
 
 from billiard.process import Process
 
@@ -35,6 +40,12 @@ def canonicalize_url(url):
         url += "/"
 
     return url
+
+def qstring_to_str(qs):
+    return unicode(qs.toUtf8(), encoding="utf-8").encode("utf-8")
+
+def str_to_qstring(s):
+    return QString.fromUtf8(s)
 
 CONFORMS_TO = "http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
 
@@ -57,13 +68,12 @@ class WarcNetworkReply(QNetworkReply):
         if warc_record is not None:
             self._init_from_warc_record(warc_record)
 
-            self.setFinished(True)
-            QTimer.singleShot(0, self.finished.emit)
-
         else:
             self._init_from_network_reply(network_reply)
 
     def _init_from_network_reply(self, network_reply):
+        self._data = ""
+
         self._temp_data = TemporaryFile()
 
         self._network_reply = network_reply
@@ -73,10 +83,8 @@ class WarcNetworkReply(QNetworkReply):
 
     def _init_from_warc_record(self, warc_record):
         self._warc_record = warc_record
-
         self.open(QNetworkReply.ReadOnly | QNetworkReply.Unbuffered)
-
-        self.setUrl(QUrl(self._warc_record.url))
+        self.setUrl(QUrl(str_to_qstring(self._warc_record.url)))
 
         rs = ResponseMessage(RequestMessage())
         rs.feed(self._warc_record.content[1])
@@ -93,6 +101,7 @@ class WarcNetworkReply(QNetworkReply):
         self._data = rs.get_body()
 
         QTimer.singleShot(0, self.readyRead.emit)
+        QTimer.singleShot(0, self.finished.emit)
 
     def _reply_ready_read(self):
         self._temp_data.write(self._network_reply.readAll())
@@ -101,6 +110,18 @@ class WarcNetworkReply(QNetworkReply):
         self._network_reply.readyRead.disconnect(self._reply_ready_read)
         self._network_reply.finished.disconnect(self._reply_finished)
         self._network_reply.error.disconnect(self._reply_error)
+
+        status_code = self._network_reply.attribute(QNetworkRequest \
+                .HttpStatusCodeAttribute)
+
+        if not status_code.isValid():
+            self._temp_data.close()
+            self._temp_data = None
+            self._network_reply = None
+
+            QTimer.singleShot(0, self.finished.emit)
+
+            return
 
         headers = dict()
 
@@ -117,12 +138,7 @@ class WarcNetworkReply(QNetworkReply):
 
         elements.append("")
 
-        url = str(self._network_reply.url().toString())
-
-        status_code = self._network_reply.attribute(QNetworkRequest \
-                .HttpStatusCodeAttribute)
-
-        assert(status_code.isValid())
+        url = qstring_to_str(self._network_reply.url().toString())
 
         status_msg = self._network_reply.attribute(QNetworkRequest \
                 .HttpReasonPhraseAttribute)
@@ -142,7 +158,7 @@ class WarcNetworkReply(QNetworkReply):
 
         content = (content_type, content_data)
 
-        wr = warc.make_response(WarcRecord.random_warc_uuid(), 
+        wr = warc.make_response(WarcRecord.random_warc_uuid(),
                 warc.warc_datetime_str(datetime.utcnow()), url, content, None)
 
         self._temp_data.close()
@@ -152,43 +168,25 @@ class WarcNetworkReply(QNetworkReply):
 
         self._init_from_warc_record(wr)
 
-    def _reply_error(self):
-        print "ERR"
+        self._network_reply = None
 
-        print self._network_reply.url().toString()
-
-        print self._network_reply.error()
-
-        self._data = ""
-
-        if not self.isFinished():
-            self.setFinished(True)
-            QTimer.singleShot(0, self.finished.emit)
+    def _reply_error(self, code):
+        self.error.emit(self._network_reply.error())
 
     def abort(self):
-        print "AB", self.url()
-
-        if not self.isFinished():
-            self.setFinished(True)
-            QTimer.singleShot(0, self.finished.emit)
-
-        else:
-            print "NAB"
+        if self._network_reply:
+            self._network_reply.readyRead.disconnect(self._reply_ready_read)
+            self._network_reply.finished.disconnect(self._reply_finished)
+            self._network_reply.error.disconnect(self._reply_error)
+            self._network_reply.abort()
+            self._network_reply = None
 
     def isSequential(self):
         return True
 
     def bytesAvailable(self):
         ba = len(self._data) - self._offset \
-                        + super(QNetworkReply, self).bytesAvailable()
-
-        print "BA", self.url(), ba
-
-        if (ba == 0) and not self.isFinished():
-            print "FIN", self.url()
-
-            self.setFinished(True)
-            QTimer.singleShot(0, self.finished.emit)
+                + super(QNetworkReply, self).bytesAvailable()
 
         return ba
 
@@ -196,15 +194,6 @@ class WarcNetworkReply(QNetworkReply):
         max_size = min(max_size, len(self._data) - self._offset)
         start = self._offset
         self._offset += max_size
-
-        print "RD", self.url(), max_size
-
-        if len(self._data) - self._offset == 0:
-            if not self.isFinished():
-                print "FIN", self.url()
-
-                self.setFinished(True)
-                QTimer.singleShot(0, self.finished.emit)
 
         return str(self._data[start:self._offset])
 
@@ -230,10 +219,8 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
 
     def createRequest(self, operation, request, data):
         url = request.url()
-
-        print "-->", url
-
-        warc_record = self._find_warc_record(canonicalize_url(url.toString()))
+        url_s = qstring_to_str(url.toString())
+        warc_record = self._find_warc_record(canonicalize_url(url_s))
 
         if warc_record:
             network_reply = WarcNetworkReply(self, warc_record=warc_record)
@@ -249,8 +236,6 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
 
         self._pending += 1
 
-        print ">>>", self._pending
-
         if self._req_timer is not None:
             self._req_timer.stop()
             self._req_timer = None
@@ -259,8 +244,6 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
 
     def _finished(self, reply):
         self._pending -= 1
-
-        print "<<<", self._pending
 
         # vamos aguardar algum tempo para alguma outra requisição
         if self._pending == 0:
@@ -272,6 +255,7 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
 
     def _req_timeout(self):
         self._req_timer = None
+
         QTimer.singleShot(0, self.timeout.emit)
 
     def _write_warc_record(self, warc_record):
@@ -298,11 +282,8 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
             if record and (record.type == WarcRecord.RESPONSE) \
                     and (record.content[0] == ResponseMessage.CONTENT_TYPE) \
                     and (record.url == url):
-                print "== ENCONTRADO =="
 
                 return record
-
-        print "== NÃO ENCONTRADO =="
 
         return None
 
@@ -349,14 +330,13 @@ class PageLoader(QObject):
         self._custom_mgr = WarcNetworkAccessManager()
         self._page.page().setNetworkAccessManager(self._custom_mgr)
         self._custom_mgr.timeout.connect(self._timeout)
-        self._page.load(QUrl(url))
+        self._page.load(QUrl(str_to_qstring(url)))
 
         # tempo máximo de espera
         self._timer = QTimer()
-        self._timer.setInterval(20000)
+        self._timer.setInterval(15000)
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self._timeout)
-        self._timer.timeout.connect(self._timeout_geral)
         self._timer.start()
 
         self._app.exec_()
@@ -364,8 +344,6 @@ class PageLoader(QObject):
         return True
 
     def _timeout(self):
-        print "TIMEOUT"
-
         self._timer.timeout.disconnect(self._timeout)
         self._custom_mgr.timeout.disconnect(self._timeout)
 
@@ -376,9 +354,6 @@ class PageLoader(QObject):
         image.save("output.png")
 
         self._app.quit()
-
-    def _timeout_geral(self):
-        print "TIMEOUT GERAL"
 
 @celery.task
 class PageLoaderTask(Task):
@@ -401,3 +376,5 @@ if __name__ == "__main__":
     pl = PageLoader()
 
     pl.load("http://www.terra.com.br/")
+    #pl.load("http://g1.globo.com/index.html")
+    #pl.load("http://noticias.terra.com.br/brasil/policia/sp-perseguicao-na-contramao-acaba-em-morte-na-marginal,178c3b64df0ca410VgnVCM10000098cceb0aRCRD.html")
