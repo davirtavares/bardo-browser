@@ -80,9 +80,10 @@ class WarcNetworkReply(QNetworkReply):
         for name, value in rs.header.headers:
             self.setRawHeader(name, value)
 
-        # TODO: obter esses dados do warc record
-        self.setAttribute(QNetworkRequest.HttpStatusCodeAttribute, 200)
-        self.setAttribute(QNetworkRequest.HttpReasonPhraseAttribute, "OK")
+        self.setAttribute(QNetworkRequest.HttpStatusCodeAttribute, \
+                rs.header.code)
+        self.setAttribute(QNetworkRequest.HttpReasonPhraseAttribute, \
+                rs.header.phrase)
 
         QTimer.singleShot(0, self.metaDataChanged.emit)
 
