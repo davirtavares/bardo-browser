@@ -4,40 +4,24 @@ import os
 import re
 from tempfile import TemporaryFile
 from datetime import datetime
-import signal
-
-signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 # TODO: usar Qt5
 
 # TODO: logging
 
-# TODO: separar código do Celery e Task
-
 # TODO: redirecionamentos
 
-from PyQt4.QtCore import QTimer, pyqtSignal, QObject, QSize, QUrl, QString
-from PyQt4.QtGui import QApplication, QImage, QPainter
+from PyQt4.QtCore import QTimer, QUrl, QString
 
 from PyQt4.QtNetwork import QNetworkRequest, \
         QNetworkReply, \
         QNetworkAccessManager
 
-from PyQt4.QtWebKit import QWebView, QWebPage
-
-from billiard.process import Process
-
-from celery import Celery, Task, registry
-
 from hanzo.warctools import warc, WarcRecord
 from hanzo.httptools import RequestMessage, ResponseMessage
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WARC_DIR = os.path.join(BASE_DIR, "warc")
-
-celery = Celery("bardo.page_load", backend="amqp://", broker="amqp://")
-
-# XXX: usar uma única instância de QApplication por worker?
 
 def canonicalize_url(url):
     if re.match(r"^https?://[^/]+$", url):
@@ -208,21 +192,9 @@ class WarcNetworkReply(QNetworkReply):
     # processar HTML para reconstruir URLs apontando para cache
 
 class WarcNetworkAccessManager(QNetworkAccessManager):
-    timeout = pyqtSignal()
-
-    _pending = 0
-    _req_timer = None
-
-    # XXX: acho que __init__ tem mais parâmetros
-    def __init__(self):
-        super(WarcNetworkAccessManager, self).__init__()
-
-        self.finished.connect(self._finished)
-
     def createRequest(self, operation, request, data):
-        url = request.url()
-        url_s = qstring_to_str(url.toString())
-        warc_record = self._find_warc_record(canonicalize_url(url_s))
+        url = qstring_to_str(request.url().toString())
+        warc_record = self._find_warc_record(canonicalize_url(url))
 
         if warc_record:
             network_reply = WarcNetworkReply(self, warc_record=warc_record)
@@ -236,29 +208,7 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
         network_reply.setRequest(request)
         network_reply.setOperation(operation)
 
-        self._pending += 1
-
-        if self._req_timer is not None:
-            self._req_timer.stop()
-            self._req_timer = None
-
         return network_reply
-
-    def _finished(self, reply):
-        self._pending -= 1
-
-        # vamos aguardar algum tempo para alguma outra requisição
-        if self._pending == 0:
-            self._req_timer = QTimer()
-            self._req_timer.setInterval(2000)
-            self._req_timer.setSingleShot(True)
-            self._req_timer.timeout.connect(self.timeout)
-            self._req_timer.start()
-
-    def _req_timeout(self):
-        self._req_timer = None
-
-        QTimer.singleShot(0, self.timeout.emit)
 
     def _write_warc_record(self, warc_record):
         fn = os.path.join(WARC_DIR, self._get_warc_name(warc_record.url))
@@ -290,7 +240,7 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
         return None
 
     def _get_warc_name(self, url):
-        return "page-loader.warc.gz"
+        return "bardo-browser.warc.gz"
 
     def _init_warc_file(self, file_name):
         warcinfo_headers = [
@@ -301,7 +251,7 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
         ]
 
         warcinfo_fields = "\r\n".join([
-            "software: bardo.pageloader",
+            "software: bardo",
             "format: WARC File Format 1.0",
             "conformsTo: " + CONFORMS_TO,
             "robots: unknown",
@@ -317,66 +267,3 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
         warcinfo_record.write_to(fh, gzip=True)
 
         return fh
-
-class PageLoader(QObject):
-    _app = None
-    _custom_mgr = None
-    _page = None
-    _timer = None
-
-    def load(self, url):
-        self._app = QApplication([])
-        self._page = QWebView()
-
-        self._page.page().setViewportSize(QSize(1366, 768))
-        self._custom_mgr = WarcNetworkAccessManager()
-        self._page.page().setNetworkAccessManager(self._custom_mgr)
-        self._custom_mgr.timeout.connect(self._timeout)
-        self._page.load(QUrl(str_to_qstring(url)))
-
-        # tempo máximo de espera
-        self._timer = QTimer()
-        self._timer.setInterval(15000)
-        self._timer.setSingleShot(True)
-        self._timer.timeout.connect(self._timeout)
-        self._timer.start()
-
-        self._app.exec_()
-
-        return True
-
-    def _timeout(self):
-        self._timer.timeout.disconnect(self._timeout)
-        self._custom_mgr.timeout.disconnect(self._timeout)
-
-        image = QImage(self._page.page().viewportSize(), QImage.Format_ARGB32)
-        painter = QPainter(image)
-        self._page.page().mainFrame().render(painter)
-        painter.end()
-        image.save("output.png")
-
-        self._app.quit()
-
-@celery.task
-class PageLoaderTask(Task):
-    _page_loader = None
-
-    def __init__(self):
-        self._page_loader = PageLoader()
-
-    def run(self, url):
-        p = Process(target=self._run, args=[url])
-        p.start()
-        p.join()
-
-    def _run(self, url):
-        self._page_loader.load(url)
-
-load_page = registry.tasks[PageLoaderTask.name]
-
-if __name__ == "__main__":
-    pl = PageLoader()
-
-    pl.load("http://www.terra.com.br/")
-    #pl.load("http://g1.globo.com/index.html")
-    #pl.load("http://noticias.terra.com.br/brasil/policia/sp-perseguicao-na-contramao-acaba-em-morte-na-marginal,178c3b64df0ca410VgnVCM10000098cceb0aRCRD.html")
