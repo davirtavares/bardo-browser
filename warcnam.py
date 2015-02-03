@@ -118,8 +118,6 @@ class WarcNetworkReply(QNetworkReply):
             temp = str(self._network_reply.rawHeader(header))
             headers[str(header)] = re.sub("\s", " ", temp)
 
-        # XXX: alguns cabeçalhos não farão sentido no WARC
-
         elements = []
 
         for name, value in headers.iteritems():
@@ -136,6 +134,7 @@ class WarcNetworkReply(QNetworkReply):
 
         self._temp_data.seek(0)
 
+        # XXX: não há como obter a versão do HTTP, assumimos 1.1
         h_status = "HTTP/1.1 " + str(status_code.toString()) + " " \
                 + str(status_msg.toString())
 
