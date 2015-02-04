@@ -9,9 +9,9 @@ from datetime import datetime
 
 # TODO: logging
 
-# TODO: redirecionamentos
+# TODO: protocolo "data:"
 
-from PyQt4.QtCore import QTimer, QUrl, QString
+from PyQt4.QtCore import QTimer, QUrl, QString, QLatin1String
 
 from PyQt4.QtNetwork import QNetworkRequest, \
         QNetworkReply, \
@@ -84,6 +84,8 @@ class WarcNetworkReply(QNetworkReply):
                 rs.header.code)
         self.setAttribute(QNetworkRequest.HttpReasonPhraseAttribute, \
                 rs.header.phrase)
+
+        self._check_for_redirect(rs.header.code)
 
         QTimer.singleShot(0, self.metaDataChanged.emit)
 
@@ -160,6 +162,15 @@ class WarcNetworkReply(QNetworkReply):
 
     def _reply_error(self, code):
         self.error.emit(self._network_reply.error())
+
+    def _check_for_redirect(self, status_code):
+        if status_code in (301, 302, 303, 307):
+            url = QUrl.fromEncoded(self.rawHeader("Location"))
+
+            if not url.isValid():
+                url = QUrl(QLatin1String(header))
+
+            self.setAttribute(QNetworkRequest.RedirectionTargetAttribute, url)
 
     def abort(self):
         if self._network_reply:
