@@ -23,12 +23,6 @@ from hanzo.httptools import RequestMessage, ResponseMessage
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WARC_DIR = os.path.join(BASE_DIR, "warc")
 
-def canonicalize_url(url):
-    if re.match(r"^https?://[^/]+$", url):
-        url += "/"
-
-    return url
-
 def qstring_to_str(qs):
     return unicode(qs.toUtf8(), encoding="utf-8").encode("utf-8")
 
@@ -206,7 +200,7 @@ class WarcNetworkReply(QNetworkReply):
 class WarcNetworkAccessManager(QNetworkAccessManager):
     def createRequest(self, operation, request, data):
         url = qstring_to_str(request.url().toString())
-        warc_record = self._find_warc_record(canonicalize_url(url))
+        warc_record = self._find_warc_record(url)
 
         if warc_record:
             network_reply = WarcNetworkReply(self, warc_record=warc_record)
@@ -246,7 +240,6 @@ class WarcNetworkAccessManager(QNetworkAccessManager):
             if record and (record.type == WarcRecord.RESPONSE) \
                     and (record.content[0] == ResponseMessage.CONTENT_TYPE) \
                     and (record.url == url):
-
                 return record
 
         return None

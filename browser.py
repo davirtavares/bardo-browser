@@ -1,6 +1,7 @@
 import sys
 
 from PyQt4 import QtCore, QtGui, QtWebKit
+from PyQt4.QtWebKit import QWebSettings
 
 from warcnam import WarcNetworkAccessManager
 
@@ -50,7 +51,9 @@ class Browser(QtGui.QMainWindow):
         self.connect(self.bt_ahead, QtCore.SIGNAL("clicked()"), self.html.forward)
         self.connect(self.html, QtCore.SIGNAL("urlChanged(const QUrl)"), self.url_changed)
 
-        self.default_url = "http://codescience.wordpress.com/"
+        QWebSettings.globalSettings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True);
+
+        self.default_url = "http://g1.globo.com/"
         self.tb_url.setText(self.default_url)
         self.browse()
 
