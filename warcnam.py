@@ -165,7 +165,8 @@ class WarcNetworkReply(QNetworkReply):
 
     def _check_for_redirect(self, status_code):
         if status_code in (301, 302, 303, 307):
-            url = QUrl.fromEncoded(self.rawHeader("Location"))
+            header = self.rawHeader("Location")
+            url = QUrl.fromEncoded(header)
 
             if not url.isValid():
                 url = QUrl(QLatin1String(header))
