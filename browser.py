@@ -34,7 +34,12 @@ class WebElementHighlighter(QtGui.QWidget):
         self.update()
 
     def remove_element(self, element):
-        self._elements.remove(element)
+        try:
+            self._elements.remove(element)
+
+        except ValueError:
+            pass
+
         self.update()
 
     def clear_elements(self):
