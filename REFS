@@ -1,0 +1,65 @@
+- Em uma página o usuário pode clicar no ícone para especificar padrão.
+
+- O browser pode estar em 2 modos:
+  - Modo navegação: a barra de URL fica aberta e ele pode navegar por
+    qualquer endereço.
+
+  - Modo de seleção: a barra de URL fica bloqueada e ele não pode navegar,
+    podendo apenas fazer seleções, salvar ou cancelar.
+
+- Quando o browser passa para o modo seleção, a página atual é arquivada em
+  um WARC volátil e recarregada a partir dele, efetivamente entrando no modo
+  de seleção.
+
+- Quando o browser navega para uma URL que já tenha padrão selecionado, a
+  página (se suas sub-requisições) será carregada a partir do WARC
+  correspondente.
+
+- Durante a seleção o usuário pode escolher salvar ou cancelar:
+  - Ao salvar, o WARC é gravado permanentemente.
+
+  - Ao cancelar, o WARC é descartado (se volátil).
+
+- Seleções feitas anteriormentes podem ser editadas sem problemas, haverá
+  uma opção para editar as seleções já conhecidas.
+
+- Cada seleção tem seu próprio WARC.
+
+FLUXOS:
+-------
+
+[ SELEÇÃO ]
+
+01) Usuário abre URL;
+
+02) Clica em Modo Seleção;
+
+03) NAM passa para o modo WARC e recarrega página;
+
+04) WARC é criado em arquivo temporário;
+
+05) Browser entra no modo seleção e libera controles de seleção;
+
+06) Usuário marca e rotula elementos quantos quiser;
+
+07) Após selecionar todos os elementos, usuário clica em Salvar;
+
+08) Ao salvar o Browser move o WARC para o local definitivo;
+
+09) Seleções são salvas (junto do WARC?);
+
+10) Browser volta para o Modo Navegação;
+
+[ EDIÇÃO ]
+
+01) Usuário abre URL que já exista seleção;
+
+02) WARC é identificado e NAM entra no modo WARC antes de abrir a URL;
+
+03) Página é aberta tal como foi arquivada;
+
+04) Usuário clica em Modo Seleção para editar as seleções;
+
+05) Após realizar as alterações o usuário clica em Salvar;
+
+06) As novas seleções são salvas e o Browser volta ao Modo Navegação;
