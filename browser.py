@@ -44,6 +44,7 @@ class WebElementHighlighter(QtGui.QWidget):
 
     def clear_elements(self):
         del self._elements[:]
+        del self._highlighted_elements[:]
 
         self.update()
 
@@ -136,6 +137,7 @@ class Browser(QtGui.QMainWindow):
         self.connect(self._ui.test_button, QtCore.SIGNAL("clicked()"), self.test)
 
         self.default_url = "http://g1.globo.com/economia/mercados/noticia/2015/02/dolar-fecha-em-forte-alta-e-passa-de-r-283-nesta-terca.html"
+        self.default_url = "http://g1.globo.com/economia/mercados/index.html"
         self._ui.url_location.setText(self.default_url)
         self.browse()
 
@@ -144,6 +146,7 @@ class Browser(QtGui.QMainWindow):
                 if self._ui.url_location.text() \
                 else self.default_url
 
+        self._highlighter.clear_elements()
         self._ui.web_view.load(QtCore.QUrl(url))
         self._ui.web_view.show()
 
@@ -177,7 +180,13 @@ class Browser(QtGui.QMainWindow):
         hit_result = self._ui.web_view.page().mainFrame().hitTestContent(pos)
 
         if not hit_result.isNull():
-            self.highlight_element(hit_result.enclosingBlockElement())
+            element = hit_result.enclosingBlockElement()
+
+            if not element.isNull():
+                self.highlight_element(element)
+
+            else:
+                self.highlight_element(None)
 
         else:
             self.highlight_element(None)
