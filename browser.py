@@ -65,7 +65,8 @@ class WebElementHighlighter(QtGui.QWidget):
     def initUI(self):
         self.setMinimumSize(300, 300)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred, \
+                QtGui.QSizePolicy.Preferred)
 
     def paintEvent(self, e):
         qp = QtGui.QPainter()
