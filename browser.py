@@ -154,17 +154,12 @@ class Browser(QtGui.QMainWindow):
         self._highlighter.resize(event.size())
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.MouseMove:
-            hit_test_result = self._ui.web_view.page().mainFrame() \
-                    .hitTestContent(event.pos())
+        try:
+            if event.type() == QEvent.MouseMove:
+                self._handle_mouse_move(event.pos())
 
-            if not hit_test_result.isNull():
-                self.highlight_element(hit_test_result.enclosingBlockElement())
-
-            else:
-                self.highlight_element(None)
-
-        return QtGui.QMainWindow.eventFilter(self, obj, event)
+        finally:
+            return QtGui.QMainWindow.eventFilter(self, obj, event)
 
     def select_element(self):
         pass
@@ -177,6 +172,15 @@ class Browser(QtGui.QMainWindow):
                 .findFirst("h1")
 
         self._highlighter.add_element(h1)
+
+    def _handle_mouse_move(self, pos):
+        hit_result = self._ui.web_view.page().mainFrame().hitTestContent(pos)
+
+        if not hit_result.isNull():
+            self.highlight_element(hit_result.enclosingBlockElement())
+
+        else:
+            self.highlight_element(None)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
