@@ -12,7 +12,7 @@
   de seleção.
 
 - Quando o browser navega para uma URL que já tenha padrão selecionado, a
-  página (se suas sub-requisições) será carregada a partir do WARC
+  página (e suas sub-requisições) será carregada a partir do WARC
   correspondente.
 
 - Durante a seleção o usuário pode escolher salvar ou cancelar:

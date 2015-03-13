@@ -1,13 +1,18 @@
 # -*- coding: UTF-8 -*-
 
+import os
 import sys
 
 from PyQt4.QtCore import Qt, QEvent
 from PyQt4 import QtCore, QtGui, QtWebKit
-from PyQt4.QtWebKit import QWebSettings
+from PyQt4.QtWebKit import QWebSettings, QWebPage
 
 from warcnam import WarcNetworkAccessManager
 from uibrowser import Ui_Browser
+from warc import Warc
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+WARC_DIR = os.path.join(BASE_DIR, "warc")
 
 class WebElementHighlighter(QtGui.QWidget):
     selection_color = QtGui.QColor(255, 0, 0)
@@ -108,6 +113,10 @@ class WebElementHighlighter(QtGui.QWidget):
         return rect
 
 class Browser(QtGui.QMainWindow):
+    BROWSER_MODE_NORMAL = 1
+    BROWSER_MODE_SELECTION = 2
+
+    _browser_mode = None
     _ui = None
     _warc_nan = None
     _highlighter = None
@@ -116,7 +125,10 @@ class Browser(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
 
         self._ui = Ui_Browser()
+
         self._warc_nan = WarcNetworkAccessManager()
+        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
+        self._warc_nan.current_warc = Warc(warc_file, temporary=True)
 
         self._ui.setupUi(self)
         self._highlighter = WebElementHighlighter(self._ui.frame)
@@ -133,13 +145,23 @@ class Browser(QtGui.QMainWindow):
         self.connect(self._ui.go_back, QtCore.SIGNAL("clicked()"), self._ui.web_view.back)
         self.connect(self._ui.go_forward, QtCore.SIGNAL("clicked()"), self._ui.web_view.forward)
         self.connect(self._ui.web_view, QtCore.SIGNAL("urlChanged(const QUrl)"), self.url_changed)
-
         self.connect(self._ui.test_button, QtCore.SIGNAL("clicked()"), self.test)
 
         self.default_url = "http://g1.globo.com/economia/mercados/noticia/2015/02/dolar-fecha-em-forte-alta-e-passa-de-r-283-nesta-terca.html"
-        self.default_url = "http://g1.globo.com/economia/mercados/index.html"
+
         self._ui.url_location.setText(self.default_url)
         self.browse()
+
+    def resizeEvent(self, event):
+        self._highlighter.resize(event.size())
+
+    def eventFilter(self, obj, event):
+        try:
+            if event.type() == QEvent.MouseMove:
+                self._handle_mouse_move(event.pos())
+
+        finally:
+            return QtGui.QMainWindow.eventFilter(self, obj, event)
 
     def browse(self):
         url = self._ui.url_location.text() \
@@ -153,16 +175,21 @@ class Browser(QtGui.QMainWindow):
     def url_changed(self, url):
         self._ui.url_location.setText(url.toString())
 
-    def resizeEvent(self, event):
-        self._highlighter.resize(event.size())
+    def switch_mode(self, new_mode, commit=True):
+        if (new_mode != self.BROWSER_MODE_NORMAL) \
+                and (new_mode != self.BROWSER_MODE_SELECTION):
+            raise ValueError("Modo inválido")
 
-    def eventFilter(self, obj, event):
-        try:
-            if event.type() == QEvent.MouseMove:
-                self._handle_mouse_move(event.pos())
+        if new_mode == self._browser_mode:
+            return
 
-        finally:
-            return QtGui.QMainWindow.eventFilter(self, obj, event)
+        if new_mode == self.BROWSER_MODE_NORMAL:
+            self._enter_normal_mode(commit)
+
+        elif new_mode == self.BROWSER_MODE_SELECTION:
+            self._enter_selection_mode()
+
+        self._browser_mode = new_mode
 
     def select_element(self):
         pass
@@ -171,10 +198,16 @@ class Browser(QtGui.QMainWindow):
         self._highlighter.highlight_element(element)
 
     def test(self):
-        h1 = self._ui.web_view.page().mainFrame().documentElement() \
-                .findFirst("h1")
+        self._warc_nan.current_warc.make_permanent()
 
-        self._highlighter.add_element(h1)
+    def _enter_normal_mode(self):
+        self._ui.web_view.page().triggerAction(QWebPage.Stop)
+        self._warc_nan.current_warc = None
+
+    def _enter_selection_mode(self):
+        self._ui.web_view.page().triggerAction(QWebPage.Stop)
+        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
+        self._warc_nan.current_warc = Warc(warc_file)
 
     def _handle_mouse_move(self, pos):
         hit_result = self._ui.web_view.page().mainFrame().hitTestContent(pos)

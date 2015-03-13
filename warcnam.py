@@ -1,15 +1,14 @@
 # -*- coding: UTF-8 -*-
 
-import os
 import re
 from tempfile import TemporaryFile
 from datetime import datetime
 
-# TODO: usar Qt5
+# TODO: use Qt5
 
 # TODO: logging
 
-# TODO: protocolo "data:"
+# TODO: protocol "data:"
 
 from PyQt4.QtCore import QTimer, QUrl, QString, QLatin1String
 
@@ -20,16 +19,37 @@ from PyQt4.QtNetwork import QNetworkRequest, \
 from hanzo.warctools import warc, WarcRecord
 from hanzo.httptools import RequestMessage, ResponseMessage
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WARC_DIR = os.path.join(BASE_DIR, "warc")
-
 def qstring_to_str(qs):
     return unicode(qs.toUtf8(), encoding="utf-8").encode("utf-8")
 
 def str_to_qstring(s):
     return QString.fromUtf8(s)
 
-CONFORMS_TO = "http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
+class ErrorNetworkReply(QNetworkReply):
+    def __init__(self, request, error_string, error, parent=None):
+        super(ErrorNetworkReply, self).__init__(parent)
+
+        self.setUrl(request.url())
+        self.setOpenMode(QIODevice.ReadOnly)
+        self.setError(error, error_string)
+
+        QTimer.singleShot(0, lambda: self.error.emit(error))
+        QTimer.singleShot(0, lambda: self.finished.emit())
+
+    def abort(self):
+        pass
+
+    def bytesAvailable(self):
+        return 0
+
+    def readData(self):
+        return bytes()
+
+class ContentNotFoundNetworkReply(ErrorNetworkReply):
+    def __init__(self, request, error_string, parent=None):
+        super(ContentNotFoundNetworkReply, self) \
+                .__init__(request, error_string, \
+                    QNetworkReply.ContentNotFoundError, parent)
 
 class WarcNetworkReply(QNetworkReply):
     _warc_record = None
@@ -38,12 +58,12 @@ class WarcNetworkReply(QNetworkReply):
     _data = None
     _offset = None
 
-    def __init__(self, parent, warc_record=None, network_reply=None):
+    def __init__(self, warc_record=None, network_reply=None, parent=None):
         super(WarcNetworkReply, self).__init__(parent)
 
         if ((warc_record is not None) and (network_reply is not None)) \
                 or ((warc_record is None) and (network_reply is None)):
-            raise RuntimeError("Especifique warc_record OU network_reply")
+            raise RuntimeError("Specify warc_record OR network_reply")
 
         self._offset = 0
 
@@ -52,6 +72,30 @@ class WarcNetworkReply(QNetworkReply):
 
         else:
             self._init_from_network_reply(network_reply)
+
+    def abort(self):
+        if self._network_reply:
+            self._network_reply.readyRead.disconnect(self._reply_ready_read)
+            self._network_reply.finished.disconnect(self._reply_finished)
+            self._network_reply.error.disconnect(self._reply_error)
+            self._network_reply.abort()
+            self._network_reply = None
+
+    def isSequential(self):
+        return True
+
+    def bytesAvailable(self):
+        ba = len(self._data) - self._offset \
+                + super(QNetworkReply, self).bytesAvailable()
+
+        return ba
+
+    def readData(self, max_size):
+        max_size = min(max_size, len(self._data) - self._offset)
+        start = self._offset
+        self._offset += max_size
+
+        return str(self._data[start:self._offset])
 
     def _init_from_network_reply(self, network_reply):
         self._data = ""
@@ -81,12 +125,12 @@ class WarcNetworkReply(QNetworkReply):
 
         self._check_for_redirect(rs.header.code)
 
-        QTimer.singleShot(0, self.metaDataChanged.emit)
+        QTimer.singleShot(0, lambda: self.metaDataChanged.emit())
 
         self._data = rs.get_body()
 
-        QTimer.singleShot(0, self.readyRead.emit)
-        QTimer.singleShot(0, self.finished.emit)
+        QTimer.singleShot(0, lambda: self.readyRead.emit())
+        QTimer.singleShot(0, lambda: self.finished.emit())
 
     def _reply_ready_read(self):
         self._temp_data.write(self._network_reply.readAll())
@@ -104,7 +148,7 @@ class WarcNetworkReply(QNetworkReply):
             self._temp_data = None
             self._network_reply = None
 
-            QTimer.singleShot(0, self.finished.emit)
+            QTimer.singleShot(0, lambda: self.finished.emit())
 
             return
 
@@ -130,7 +174,7 @@ class WarcNetworkReply(QNetworkReply):
 
         self._temp_data.seek(0)
 
-        # XXX: não há como obter a versão do HTTP, assumimos 1.1
+        # XXX: we can't get HTTP version from Qt, assumes 1.1
         h_status = "HTTP/1.1 " + str(status_code.toString()) + " " \
                 + str(status_msg.toString())
 
@@ -148,7 +192,7 @@ class WarcNetworkReply(QNetworkReply):
         self._temp_data.close()
         self._temp_data = None
 
-        self.manager()._write_warc_record(wr)
+        self.manager().current_warc.write_record(wr)
 
         self._init_from_warc_record(wr)
 
@@ -167,108 +211,42 @@ class WarcNetworkReply(QNetworkReply):
 
             self.setAttribute(QNetworkRequest.RedirectionTargetAttribute, url)
 
-    def abort(self):
-        if self._network_reply:
-            self._network_reply.readyRead.disconnect(self._reply_ready_read)
-            self._network_reply.finished.disconnect(self._reply_finished)
-            self._network_reply.error.disconnect(self._reply_error)
-            self._network_reply.abort()
-            self._network_reply = None
-
-    def isSequential(self):
-        return True
-
-    def bytesAvailable(self):
-        ba = len(self._data) - self._offset \
-                + super(QNetworkReply, self).bytesAvailable()
-
-        return ba
-
-    def readData(self, max_size):
-        max_size = min(max_size, len(self._data) - self._offset)
-        start = self._offset
-        self._offset += max_size
-
-        return str(self._data[start:self._offset])
-
-    # TODO:
-    #
-    # aguardar headers para checar se CT permite cache
-    #
-    # processar HTML para reconstruir URLs apontando para cache
-
 class WarcNetworkAccessManager(QNetworkAccessManager):
+    _current_warc = None
+
     def createRequest(self, operation, request, data):
-        url = qstring_to_str(request.url().toString())
-        warc_record = self._find_warc_record(url)
-
-        if warc_record:
-            network_reply = WarcNetworkReply(self, warc_record=warc_record)
-
-        else:
-            initial_reply = super(WarcNetworkAccessManager, self) \
+        if not self._current_warc:
+            return super(WarcNetworkAccessManager, self) \
                     .createRequest(operation, request, data)
 
-            network_reply = WarcNetworkReply(self, network_reply=initial_reply)
+        url = qstring_to_str(request.url().toString())
+        warc_record = self._current_warc.find_record(url)
+
+        if warc_record:
+            network_reply = WarcNetworkReply(warc_record=warc_record, \
+                    parent=self)
+
+        else:
+            if not self._current_warc.read_only:
+                initial_reply = super(WarcNetworkAccessManager, self) \
+                        .createRequest(operation, request, data)
+
+                network_reply = WarcNetworkReply(network_reply=initial_reply, \
+                        parent=self)
+
+            else:
+                network_reply = ContentNotFoundNetworkReply(request, \
+                        "Content not found on WARC file", self)
 
         network_reply.setRequest(request)
         network_reply.setOperation(operation)
 
         return network_reply
 
-    def _write_warc_record(self, warc_record):
-        fn = os.path.join(WARC_DIR, self._get_warc_name(warc_record.url))
+    @property
+    def current_warc(self):
+        return self._current_warc
 
-        if os.path.exists(fn):
-            fh = open(fn, "ab+")
-
-        else:
-            fh = self._init_warc_file(fn)
-
-        warc_record.write_to(fh, gzip=True)
-
-    def _find_warc_record(self, url):
-        fn = os.path.join(WARC_DIR, self._get_warc_name(url))
-
-        try:
-            wrs = WarcRecord.open_archive(fn)
-
-        except IOError:
-            return None
-
-        for (offset, record, errors) in wrs.read_records(limit=None):
-            if record and (record.type == WarcRecord.RESPONSE) \
-                    and (record.content[0] == ResponseMessage.CONTENT_TYPE) \
-                    and (record.url == url):
-                return record
-
-        return None
-
-    def _get_warc_name(self, url):
-        return "bardo-browser.warc.gz"
-
-    def _init_warc_file(self, file_name):
-        warcinfo_headers = [
-            (WarcRecord.TYPE, WarcRecord.WARCINFO),
-            (WarcRecord.ID, WarcRecord.random_warc_uuid()),
-            (WarcRecord.DATE, warc.warc_datetime_str(datetime.utcnow())),
-            (WarcRecord.FILENAME, os.path.basename(file_name)),
-        ]
-
-        warcinfo_fields = "\r\n".join([
-            "software: bardo",
-            "format: WARC File Format 1.0",
-            "conformsTo: " + CONFORMS_TO,
-            "robots: unknown",
-        ])
-
-        warcinfo_content = ("application/warc-fields", warcinfo_fields)
-
-        warcinfo_record = WarcRecord(headers=warcinfo_headers, \
-                content=warcinfo_content)
-
-        fh = open(file_name, "wb+")
-
-        warcinfo_record.write_to(fh, gzip=True)
-
-        return fh
+    @current_warc.setter
+    def current_warc(self, warc):
+        self._current_warc = warc
