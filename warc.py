@@ -6,6 +6,7 @@ import shutil
 from datetime import datetime
 
 from hanzo.warctools import warc, WarcRecord
+from hanzo.httptools import ResponseMessage
 
 CONFORMS_TO = "http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
 
@@ -25,6 +26,8 @@ class Warc(object):
             self._warc_file_read = NamedTemporaryFile("rb")
             self._warc_file_write = open(self._warc_file_read.name, "wb")
 
+            self._init_file()
+
         else:
             if self._read_only:
                 self._warc_file_read = open(file_name, "rb")
@@ -33,12 +36,9 @@ class Warc(object):
                 self._warc_file_read = open(file_name, "rb")
                 self._warc_file_write = open(file_name, "ab")
 
-        self._init_file()
-
     def find_record(self, url):
         self._warc_file_read.seek(0)
-        wrs = WarcRecord.open_archive(file_handle=self._warc_file_read, \
-                gzip=True)
+        wrs = WarcRecord.open_archive(file_handle=self._warc_file_read)
 
         for (offset, record, errors) in wrs.read_records(limit=None):
             if record and (record.type == WarcRecord.RESPONSE) \
@@ -53,7 +53,7 @@ class Warc(object):
             raise RuntimeError("WARC opened for read-only access")
 
         self._warc_file_write.seek(0, os.SEEK_END)
-        record.write_to(self._warc_file_write, gzip=True)
+        record.write_to(self._warc_file_write)
 
     def make_permanent(self):
         if not self._temporary:

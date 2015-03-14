@@ -30,7 +30,7 @@ class ErrorNetworkReply(QNetworkReply):
         super(ErrorNetworkReply, self).__init__(parent)
 
         self.setUrl(request.url())
-        self.setOpenMode(QIODevice.ReadOnly)
+        self.setOpenMode(QNetworkReply.ReadOnly)
         self.setError(error, error_string)
 
         QTimer.singleShot(0, lambda: self.error.emit(error))
@@ -174,7 +174,7 @@ class WarcNetworkReply(QNetworkReply):
 
         self._temp_data.seek(0)
 
-        # XXX: we can't get HTTP version from Qt, assumes 1.1
+        # XXX: we can't get HTTP version from Qt webkit, assumes 1.1
         h_status = "HTTP/1.1 " + str(status_code.toString()) + " " \
                 + str(status_msg.toString())
 
