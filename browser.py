@@ -127,7 +127,7 @@ class Browser(QtGui.QMainWindow):
         self._ui = Ui_Browser()
 
         self._warc_nan = WarcNetworkAccessManager()
-        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
+        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc")
         self._warc_nan.current_warc = Warc(warc_file, read_only=True)
 
         self._ui.setupUi(self)
