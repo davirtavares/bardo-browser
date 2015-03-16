@@ -127,8 +127,8 @@ class Browser(QtGui.QMainWindow):
         self._ui = Ui_Browser()
 
         self._warc_nan = WarcNetworkAccessManager()
-        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc")
-        self._warc_nan.current_warc = Warc(warc_file, read_only=True)
+        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
+        self._warc_nan.current_warc = Warc(warc_file, temporary=True)
 
         self._ui.setupUi(self)
         self._highlighter = WebElementHighlighter(self._ui.frame)
@@ -206,7 +206,7 @@ class Browser(QtGui.QMainWindow):
 
     def _enter_selection_mode(self):
         self._ui.web_view.page().triggerAction(QWebPage.Stop)
-        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc")
+        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
         self._warc_nan.current_warc = Warc(warc_file)
 
     def _handle_mouse_move(self, pos):

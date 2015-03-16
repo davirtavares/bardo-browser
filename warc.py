@@ -38,7 +38,8 @@ class Warc(object):
 
     def find_record(self, url):
         self._warc_file_read.seek(0)
-        wrs = WarcRecord.open_archive(file_handle=self._warc_file_read)
+        wrs = WarcRecord.open_archive(file_handle=self._warc_file_read, \
+                gzip="record")
 
         for (offset, record, errors) in wrs.read_records(limit=None):
             if record and (record.type == WarcRecord.RESPONSE) \
@@ -49,11 +50,12 @@ class Warc(object):
         return None
 
     def write_record(self, record):
-        if not self._temporary:
+        if self._read_only:
             raise RuntimeError("WARC opened for read-only access")
 
         self._warc_file_write.seek(0, os.SEEK_END)
-        record.write_to(self._warc_file_write)
+        record.write_to(self._warc_file_write, gzip=True)
+        self._warc_file_write.flush()
 
     def make_permanent(self):
         if not self._temporary:
