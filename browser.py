@@ -127,8 +127,6 @@ class Browser(QtGui.QMainWindow):
         self._ui = Ui_Browser()
 
         self._warc_nan = WarcNetworkAccessManager()
-        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
-        self._warc_nan.current_warc = Warc(warc_file, temporary=True)
 
         self._ui.setupUi(self)
         self._highlighter = WebElementHighlighter(self._ui.frame)
@@ -145,7 +143,8 @@ class Browser(QtGui.QMainWindow):
         self.connect(self._ui.go_back, QtCore.SIGNAL("clicked()"), self._ui.web_view.back)
         self.connect(self._ui.go_forward, QtCore.SIGNAL("clicked()"), self._ui.web_view.forward)
         self.connect(self._ui.web_view, QtCore.SIGNAL("urlChanged(const QUrl)"), self.url_changed)
-        self.connect(self._ui.test_button, QtCore.SIGNAL("clicked()"), self.test)
+        self.connect(self._ui.select_button, QtCore.SIGNAL("clicked()"), self.select)
+        self.connect(self._ui.save_button, QtCore.SIGNAL("clicked()"), self.save)
 
         self.default_url = "http://g1.globo.com/economia/mercados/noticia/2015/02/dolar-fecha-em-forte-alta-e-passa-de-r-283-nesta-terca.html"
 
@@ -191,13 +190,14 @@ class Browser(QtGui.QMainWindow):
 
         self._browser_mode = new_mode
 
-    def select_element(self):
-        pass
-
     def highlight_element(self, element):
         self._highlighter.highlight_element(element)
 
-    def test(self):
+    def select(self):
+        if self._browser_mode != self.BROWSER_MODE_SELECTION:
+            return
+
+    def save(self):
         self._warc_nan.current_warc.make_permanent()
 
     def _enter_normal_mode(self):

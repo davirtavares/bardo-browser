@@ -63,9 +63,16 @@
       <item>
        <layout class="QHBoxLayout" name="toolbar">
         <item>
-         <widget class="QPushButton" name="test_button">
+         <widget class="QPushButton" name="select_button">
           <property name="text">
-           <string>Teste</string>
+           <string>Selecionar</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="save_button">
+          <property name="text">
+           <string>Salvar</string>
           </property>
          </widget>
         </item>
@@ -127,9 +134,6 @@
    <header>QtWebKit/QWebView</header>
   </customwidget>
  </customwidgets>
- <tabstops>
-  <tabstop>web_view</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'browser.ui'
 #
-# Created: Tue Feb 10 16:14:44 2015
+# Created: Mon Mar 16 15:30:21 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -62,9 +62,12 @@ class Ui_Browser(object):
         self.main_toolbar.addLayout(self.url_toolbar)
         self.toolbar = QtGui.QHBoxLayout()
         self.toolbar.setObjectName(_fromUtf8("toolbar"))
-        self.test_button = QtGui.QPushButton(self.centralwidget)
-        self.test_button.setObjectName(_fromUtf8("test_button"))
-        self.toolbar.addWidget(self.test_button)
+        self.select_button = QtGui.QPushButton(self.centralwidget)
+        self.select_button.setObjectName(_fromUtf8("select_button"))
+        self.toolbar.addWidget(self.select_button)
+        self.save_button = QtGui.QPushButton(self.centralwidget)
+        self.save_button.setObjectName(_fromUtf8("save_button"))
+        self.toolbar.addWidget(self.save_button)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.toolbar.addItem(spacerItem)
         self.main_toolbar.addLayout(self.toolbar)
@@ -97,6 +100,7 @@ class Ui_Browser(object):
         QtCore.QMetaObject.connectSlotsByName(Browser)
 
     def retranslateUi(self, Browser):
-        self.test_button.setText(_translate("Browser", "Teste", None))
+        self.select_button.setText(_translate("Browser", "Selecionar", None))
+        self.save_button.setText(_translate("Browser", "Salvar", None))
 
 from PyQt4 import QtWebKit
