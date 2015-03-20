@@ -2,12 +2,13 @@
 
 import os
 import sys
+import urltools
 
 from PyQt4.QtCore import Qt, QEvent
 from PyQt4 import QtCore, QtGui, QtWebKit
 from PyQt4.QtWebKit import QWebSettings, QWebPage
 
-from warcnam import WarcNetworkAccessManager
+from warcnam import WarcNetworkAccessManager, qstring_to_str
 from uibrowser import Ui_Browser
 from warc import Warc
 
@@ -54,7 +55,7 @@ class WebElementHighlighter(QtGui.QWidget):
         self.update()
 
     def highlight_element(self, element):
-        self.highlight_elements([element])
+        self.highlight_elements([element] if element else [])
 
     def highlight_elements(self, element_list):
         new_list = []
@@ -65,7 +66,7 @@ class WebElementHighlighter(QtGui.QWidget):
         if cmp(new_list, self._highlighted_elements) == 0:
             return
 
-        self._highlighted_elements[:] = new_list
+        self._highlighted_elements = new_list[:]
         self.update()
 
     def initUI(self):
@@ -120,22 +121,23 @@ class Browser(QtGui.QMainWindow):
     _ui = None
     _warc_nan = None
     _highlighter = None
+    _selecting = False
 
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
 
         self._ui = Ui_Browser()
-
-        self._warc_nan = WarcNetworkAccessManager()
-
         self._ui.setupUi(self)
         self._highlighter = WebElementHighlighter(self._ui.frame)
+
+        self._warc_nan = WarcNetworkAccessManager()
+        self.switch_mode(self.BROWSER_MODE_NORMAL)
 
         self._ui.web_view.installEventFilter(self)
         self._ui.web_view.setMouseTracking(True)
         self._ui.web_view.page().setNetworkAccessManager(self._warc_nan)
 
-        self.resize(500, 600)
+        self.resize(800, 600)
 
         self._highlighter.resize(self.size())
 
@@ -156,7 +158,7 @@ class Browser(QtGui.QMainWindow):
 
     def eventFilter(self, obj, event):
         try:
-            if event.type() == QEvent.MouseMove:
+            if (event.type() == QEvent.MouseMove) and self._selecting:
                 self._handle_mouse_move(event.pos())
 
         finally:
@@ -172,42 +174,74 @@ class Browser(QtGui.QMainWindow):
         self._ui.web_view.show()
 
     def url_changed(self, url):
-        self._ui.url_location.setText(url.toString())
+        try:
+            self.switch_mode(self.BROWSER_MODE_NORMAL)
+            url_s = qstring_to_str(self._ui.web_view.url().toString())
+            self._warc_nan.current_warc = self._get_warc_for_url(url_s)
 
-    def switch_mode(self, new_mode, commit=True):
+        finally:
+            self._ui.url_location.setText(url.toString())
+
+    def switch_mode(self, new_mode):
         if (new_mode != self.BROWSER_MODE_NORMAL) \
                 and (new_mode != self.BROWSER_MODE_SELECTION):
-            raise ValueError("Modo inválido")
+            raise ValueError("Invalid browser mode")
 
         if new_mode == self._browser_mode:
             return
 
         if new_mode == self.BROWSER_MODE_NORMAL:
-            self._enter_normal_mode(commit)
+            self._ui.select_button.setText("Selecionar")
+            self._ui.save_button.setEnabled(False)
 
-        elif new_mode == self.BROWSER_MODE_SELECTION:
-            self._enter_selection_mode()
+        else: # new_mode == self.BROWSER_MODE_SELECTION:
+            self._ui.select_button.setText("Cancelar")
+            self._ui.save_button.setEnabled(True)
 
+        self.cancel_selection()
         self._browser_mode = new_mode
+
+    def select_element(self):
+        self._selecting = True
+
+    def cancel_selection(self):
+        self._selecting = False
+        self.highlight_element(None)
 
     def highlight_element(self, element):
         self._highlighter.highlight_element(element)
 
     def select(self):
         if self._browser_mode != self.BROWSER_MODE_SELECTION:
-            return
+            self.switch_mode(self.BROWSER_MODE_SELECTION)
+
+        else:
+            self.switch_mode(self.BROWSER_MODE_NORMAL)
 
     def save(self):
+        if self._browser_mode != self.BROWSER_MODE_SELECTION:
+            return
+
         self._warc_nan.current_warc.make_permanent()
+        self.switch_mode(self.BROWSER_MODE_NORMAL)
 
-    def _enter_normal_mode(self):
-        self._ui.web_view.page().triggerAction(QWebPage.Stop)
-        self._warc_nan.current_warc = None
+    def _get_warc_for_url(self, url):
+        warc = self._find_warc(url)
 
-    def _enter_selection_mode(self):
-        self._ui.web_view.page().triggerAction(QWebPage.Stop)
-        warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
-        self._warc_nan.current_warc = Warc(warc_file)
+        if not warc:
+            warc_file = os.path.join(WARC_DIR, "bardo-browser.warc.gz")
+            warc = Warc(warc_file, temporary=True, main_url=url)
+
+        return warc
+
+    def _find_warc(self, url):
+        return None
+
+    def _compare_urls(self, url1, url2):
+        return (self._normalize_url(url1) == self._normalize_url(url2))
+
+    def _normalize_url(self, url):
+        return urltools.normalize(url)
 
     def _handle_mouse_move(self, pos):
         hit_result = self._ui.web_view.page().mainFrame().hitTestContent(pos)
@@ -226,9 +260,11 @@ class Browser(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    QWebSettings.globalSettings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
-    main = Browser()
 
+    QWebSettings.globalSettings() \
+            .setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
+
+    main = Browser()
     main.show()
 
     sys.exit(app.exec_())

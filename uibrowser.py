@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'browser.ui'
 #
-# Created: Mon Mar 16 15:30:21 2015
+# Created: Tue Mar 17 11:14:54 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_Browser(object):
     def setupUi(self, Browser):
         Browser.setObjectName(_fromUtf8("Browser"))
-        Browser.resize(721, 607)
+        Browser.resize(702, 607)
         font = QtGui.QFont()
         font.setFamily(_fromUtf8("Sans Serif"))
         Browser.setFont(font)

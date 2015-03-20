@@ -11,18 +11,25 @@ from hanzo.httptools import ResponseMessage
 CONFORMS_TO = "http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
 
 class Warc(object):
+    MAIN_URL = "WARC-X-Main-URL"
+
+    _main_url = None
     _file_name = None
     _warc_file_read = None
     _warc_file_write = None
     _temporary = None
     _read_only = False
 
-    def __init__(self, file_name, temporary=False, read_only=False):
+    def __init__(self, file_name, temporary=False, read_only=False, **kwargs):
+        self._main_url = kwargs.get("main_url")
         self._file_name = file_name
         self._temporary = temporary
         self._read_only = read_only if not self._temporary else False
 
         if self._temporary:
+            if not self._main_url:
+                raise ValueError("Missing required argument: main_url")
+
             self._warc_file_read = NamedTemporaryFile("rb")
             self._warc_file_write = open(self._warc_file_read.name, "wb")
 
@@ -73,6 +80,10 @@ class Warc(object):
         self._temporary = False
 
     @property
+    def main_url(self):
+        return self._main_url
+
+    @property
     def temporary(self):
         return self._temporary
 
@@ -86,6 +97,7 @@ class Warc(object):
             (WarcRecord.ID, WarcRecord.random_warc_uuid()),
             (WarcRecord.DATE, warc.warc_datetime_str(datetime.utcnow())),
             (WarcRecord.FILENAME, os.path.basename(self._file_name)),
+            (Warc.MAIN_URL, self._main_url),
         ]
 
         warcinfo_fields = "\r\n".join([
@@ -101,3 +113,14 @@ class Warc(object):
                 content=warcinfo_content)
 
         self.write_record(warcinfo_record)
+
+    def _load_warc_info(self):
+        self._warc_file_read.seek(0)
+        wrs = WarcRecord.open_archive(file_handle=self._warc_file_read, \
+                gzip="record")
+        temp = wrs.read_records(limit=1)
+
+        if not temp or (temp[0].type != WarcRecord.WARCINFO):
+            raise ValueError("WARC info not found")
+
+        return temp[0]
