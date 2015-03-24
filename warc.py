@@ -73,6 +73,7 @@ class Warc(object):
 
         # copy temp file to it's permanent location
         shutil.copyfileobj(self._warc_file_read, warc_file)
+        warc_file.flush()
 
         self._warc_file_read = open(self._file_name, "rb")
         self._warc_file_write = warc_file
