@@ -1,7 +1,7 @@
-var bardoPageLoaderServices = angular.module("bardo-pageloader.services", [
+var bardoBrowserServices = angular.module("bardo-browser.services", [
 ]);
 
-bardoPageLoaderServices.factory("Dialogs", ["$modal",
+bardoBrowserServices.factory("Dialogs", ["$modal",
     function($modal) {
         return {
             errorDialog: function(message, title) {
@@ -41,14 +41,14 @@ bardoPageLoaderServices.factory("Dialogs", ["$modal",
     }
 ]);
 
-bardoPageLoaderServices.controller("ErrorDialogCtrl", ["$scope", "data",
+bardoBrowserServices.controller("ErrorDialogCtrl", ["$scope", "data",
     function($scope, data) {
         $scope.message = data.message;
         $scope.title = data.title || "Error";
     }
 ]);
 
-bardoPageLoaderServices.controller("ConfirmDialogCtrl", ["$scope", "data",
+bardoBrowserServices.controller("ConfirmDialogCtrl", ["$scope", "data",
     function($scope, data) {
         $scope.message = data.message;
         $scope.title = data.title || "Confirm action";

@@ -1,8 +1,8 @@
-var bardoPageLoaderControllers = angular.module("bardo-pageloader.controllers", [
-    "bardo-pageloader.services"
+var bardoBrowserControllers = angular.module("bardo-browser.controllers", [
+    "bardo-browser.services"
 ]);
 
-bardoPageLoaderControllers.controller("IndexCtrl", ["$scope",
+bardoBrowserControllers.controller("IndexCtrl", ["$scope",
     function($scope) {
         $scope.test = function() {
             chrome.tabs.getSelected(null, function(tab) {
