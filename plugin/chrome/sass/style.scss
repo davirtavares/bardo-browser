@@ -1,0 +1,22 @@
+$bardo-prefix: "-brd-plugin-ns-";
+
+.#{$bardo-prefix} {
+    @import "../js/vendor/bootstrap-sass-official/assets/stylesheets/bootstrap";
+    @import "../js/vendor/Font-Awesome/scss/font-awesome";
+
+    .nav, .pagination, .carousel, .panel-title a {
+        cursor: pointer;
+    }
+
+    .dialog-header-error {
+        background-color: #d2322d;
+    }
+
+    .dialog-header-error span, .dialog-header-error h4 {
+        color: #fff;
+    }
+
+    .container {
+        padding-bottom: $line-height-computed;
+    }
+}

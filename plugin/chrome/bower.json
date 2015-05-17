@@ -1,0 +1,16 @@
+{
+  "name": "bardo-pageloader",
+  "version": "0.1.0",
+  "authors": [
+    "Davi R. Tavares <davirtavares@gmail.com>"
+  ],
+  "private": true,
+  "dependencies": {
+    "bootstrap-sass-official": "~3.2.0",
+    "Font-Awesome": "~4.2.0",
+    "angular": "~1.2.25",
+    "angular-route": "~1.2.25",
+    "angular-bootstrap": "~0.11.0",
+    "jquery": "~2.1.1"
+  }
+}
