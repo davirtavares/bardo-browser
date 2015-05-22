@@ -1,6 +1,5 @@
 node_modules
 .sass-cache
-/js/vendor/
-/partials/
-/dialogs/
-/popup.html
+/sass/_prefix.scss
+/vendor/
+/build/

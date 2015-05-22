@@ -1,16 +1,20 @@
 module.exports = function(grunt) {
 
     grunt.initConfig({
+        prefix: "-brd-plugin-ns-"
+    });
+
+    grunt.config.merge({
         compass: {
             default: {
                 options: {
                   sassDir: "sass",
-                  cssDir: "css",
+                  cssDir: "build/css",
                   imagesDir: "img",
                   relativeAssets: true,
-                  outputStyle: "expanded",
-                },
-            },
+                  outputStyle: "expanded"
+                }
+            }
         },
 
         copy: {
@@ -18,19 +22,44 @@ module.exports = function(grunt) {
                 files: [
                     {
                         expand: true,
-                        cwd: "js/vendor/bootstrap-sass-official/assets/fonts",
+                        cwd: "vendor/bootstrap-sass-official/assets/fonts",
                         src: ["**"],
-                        dest: "fonts/",
+                        dest: "build/fonts"
                     },
 
                     {
                         expand: true,
-                        cwd: "js/vendor/Font-Awesome/fonts",
+                        cwd: "vendor/Font-Awesome/fonts",
                         src: ["**"],
-                        dest: "fonts/",
+                        dest: "build/fonts"
                     },
-                ],
-            },
+
+                    {
+                        expand: true,
+                        src: ["icon.png", "manifest.json"],
+                        dest: "build"
+                    },
+
+                    {
+                        expand: true,
+                        src: [
+                            "vendor/jquery/dist/jquery.js",
+                            "vendor/angular/angular.js",
+                            "vendor/angular-route/angular-route.js",
+                            "vendor/angular-bootstrap/ui-bootstrap-tpls.js"
+                        ],
+                        flatten: true,
+                        dest: "build/js/3rdparty"
+                    },
+
+                    {
+                        expand: true,
+                        cwd: "js",
+                        src: ["**"],
+                        dest: "build/js"
+                    },
+                ]
+            }
         },
 
         watch: {
@@ -39,7 +68,7 @@ module.exports = function(grunt) {
                     "html/**/*"
                 ],
 
-                tasks: ["includereplace"],
+                tasks: ["includereplace"]
             },
 
             sass: {
@@ -47,22 +76,28 @@ module.exports = function(grunt) {
                     "sass/**/*"
                 ],
 
-                tasks: ["compass"],
-            },
+                tasks: ["compass"]
+            }
         },
 
         includereplace: {
             default: {
+                options: {
+                    globals: {
+                        "prefix": grunt.config("prefix")
+                    }
+                },
+
                 files: [
                     {
                         src: "**/*",
-                        dest: "./",
+                        dest: "build",
                         expand: true,
-                        cwd: "html",
-                    },
-                ],
-            },
-        },
+                        cwd: "html"
+                    }
+                ]
+            }
+        }
     });
 
     grunt.loadNpmTasks("grunt-include-replace");
@@ -70,12 +105,18 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-copy");
     grunt.loadNpmTasks("grunt-contrib-watch");
 
+    grunt.registerTask("prefix", function() {
+        grunt.file.write("sass/_prefix.scss",
+                '$prefix: "' + grunt.config("prefix") + '";\n');
+    });
+
     grunt.registerTask("default", ["compass"]);
 
     grunt.registerTask("build", [
+        "prefix",
         "copy",
         "compass",
-        "includereplace",
+        "includereplace"
     ]);
 
 };
