@@ -1,22 +1,18 @@
-@import "prefix";
+@import "../vendor/bootstrap-sass-official/assets/stylesheets/bootstrap";
+@import "../vendor/Font-Awesome/scss/font-awesome";
 
-.#{$prefix} {
-    @import "../vendor/bootstrap-sass-official/assets/stylesheets/bootstrap";
-    @import "../vendor/Font-Awesome/scss/font-awesome";
+.nav, .pagination, .carousel, .panel-title a {
+    cursor: pointer;
+}
 
-    .nav, .pagination, .carousel, .panel-title a {
-        cursor: pointer;
-    }
+.dialog-header-error {
+    background-color: #d2322d;
+}
 
-    .dialog-header-error {
-        background-color: #d2322d;
-    }
+.dialog-header-error span, .dialog-header-error h4 {
+    color: #fff;
+}
 
-    .dialog-header-error span, .dialog-header-error h4 {
-        color: #fff;
-    }
-
-    .container {
-        padding-bottom: $line-height-computed;
-    }
+.container {
+    padding-bottom: $line-height-computed;
 }
