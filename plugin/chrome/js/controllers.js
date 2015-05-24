@@ -6,8 +6,16 @@ bardoBrowserControllers.controller("IndexCtrl", ["$scope",
     function($scope) {
         $scope.test = function() {
             chrome.tabs.getSelected(null, function(tab) {
+                chrome.tabs.insertCSS(tab.id, {
+                    file: "css/content-style.css"
+                });
+
                 chrome.tabs.executeScript(tab.id, {
-                    code: 'document.body.style.backgroundColor="red"'
+                    file: "js/prefix.js"
+                });
+
+                chrome.tabs.executeScript(tab.id, {
+                    file: "js/content-script.js"
                 });
 
               //chrome.pageCapture.saveAsMHTML({ tabId: tab.id }, function (mhtml) {

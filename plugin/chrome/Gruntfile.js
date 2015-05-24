@@ -1,7 +1,7 @@
 module.exports = function(grunt) {
 
     grunt.initConfig({
-        prefix: "-brd-plugin-ns-"
+        prefix: "brd-plugin-prefix-"
     });
 
     grunt.config.merge({
@@ -108,6 +108,9 @@ module.exports = function(grunt) {
     grunt.registerTask("prefix", function() {
         grunt.file.write("sass/_prefix.scss",
                 '$prefix: "' + grunt.config("prefix") + '";\n');
+
+        grunt.file.write("js/prefix.js",
+                'var prefix = "' + grunt.config("prefix") + '";\n');
     });
 
     grunt.registerTask("default", ["compass"]);
