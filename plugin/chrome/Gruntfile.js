@@ -8,11 +8,11 @@ module.exports = function(grunt) {
         compass: {
             default: {
                 options: {
-                  sassDir: "sass",
-                  cssDir: "build/css",
-                  imagesDir: "img",
-                  relativeAssets: true,
-                  outputStyle: "expanded"
+                    sassDir: "sass",
+                    cssDir: "build/css",
+                    imagesDir: "img",
+                    relativeAssets: true,
+                    outputStyle: "expanded"
                 }
             }
         },
