@@ -1,7 +1,13 @@
 @import "prefix";
 
-[#{$prefix}-selected] {
-    outline: 1px solid red;
+[#{$prefix}-selected],
+[#{$prefix}-selected]:hover {
+    outline: 2px dashed blue !important;
+}
+
+[#{$prefix}-highlighted],
+[#{$prefix}-highlighted]:hover {
+    outline: 2px solid green !important;
 }
 
 .#{$prefix} {
