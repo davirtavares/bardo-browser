@@ -2,8 +2,7 @@
 
 # Form implementation generated from reading ui file 'browser.ui'
 #
-# Created: Tue Mar 17 11:14:54 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created by: PyQt4 UI code generator 4.11.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -35,6 +34,7 @@ class Ui_Browser(object):
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.centralwidget)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.main_toolbar = QtGui.QVBoxLayout()
+        self.main_toolbar.setSpacing(6)
         self.main_toolbar.setObjectName(_fromUtf8("main_toolbar"))
         self.url_toolbar = QtGui.QHBoxLayout()
         self.url_toolbar.setObjectName(_fromUtf8("url_toolbar"))
@@ -61,6 +61,7 @@ class Ui_Browser(object):
         self.url_toolbar.addWidget(self.url_location)
         self.main_toolbar.addLayout(self.url_toolbar)
         self.toolbar = QtGui.QHBoxLayout()
+        self.toolbar.setSizeConstraint(QtGui.QLayout.SetDefaultConstraint)
         self.toolbar.setObjectName(_fromUtf8("toolbar"))
         self.select_button = QtGui.QPushButton(self.centralwidget)
         self.select_button.setObjectName(_fromUtf8("select_button"))
@@ -68,29 +69,16 @@ class Ui_Browser(object):
         self.save_button = QtGui.QPushButton(self.centralwidget)
         self.save_button.setObjectName(_fromUtf8("save_button"))
         self.toolbar.addWidget(self.save_button)
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Minimum)
         self.toolbar.addItem(spacerItem)
         self.main_toolbar.addLayout(self.toolbar)
+        self.main_toolbar.setStretch(1, 1)
         self.verticalLayout_2.addLayout(self.main_toolbar)
-        self.frame = QtGui.QFrame(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
-        self.frame.setSizePolicy(sizePolicy)
-        self.frame.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtGui.QFrame.Raised)
-        self.frame.setObjectName(_fromUtf8("frame"))
-        self.horizontalLayout_2 = QtGui.QHBoxLayout(self.frame)
-        self.horizontalLayout_2.setMargin(0)
-        self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
-        self.web_view = QtWebKit.QWebView(self.frame)
-        font = QtGui.QFont()
-        font.setFamily(_fromUtf8("Sans Serif"))
-        self.web_view.setFont(font)
-        self.web_view.setObjectName(_fromUtf8("web_view"))
-        self.horizontalLayout_2.addWidget(self.web_view)
-        self.verticalLayout_2.addWidget(self.frame)
+        self.main_frame = QtGui.QHBoxLayout()
+        self.main_frame.setSizeConstraint(QtGui.QLayout.SetMaximumSize)
+        self.main_frame.setObjectName(_fromUtf8("main_frame"))
+        self.verticalLayout_2.addLayout(self.main_frame)
+        self.verticalLayout_2.setStretch(1, 2)
         Browser.setCentralWidget(self.centralwidget)
         self.status_bar = QtGui.QStatusBar(Browser)
         self.status_bar.setObjectName(_fromUtf8("status_bar"))
@@ -103,4 +91,3 @@ class Ui_Browser(object):
         self.select_button.setText(_translate("Browser", "Selecionar", None))
         self.save_button.setText(_translate("Browser", "Salvar", None))
 
-from PyQt4 import QtWebKit

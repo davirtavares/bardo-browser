@@ -16,9 +16,12 @@
    </font>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,2">
     <item>
-     <layout class="QVBoxLayout" name="main_toolbar">
+     <layout class="QVBoxLayout" name="main_toolbar" stretch="0,1">
+      <property name="spacing">
+       <number>6</number>
+      </property>
       <item>
        <layout class="QHBoxLayout" name="url_toolbar">
         <item>
@@ -28,8 +31,7 @@
           </property>
           <property name="icon">
            <iconset theme="go-previous">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -43,8 +45,7 @@
           </property>
           <property name="icon">
            <iconset theme="go-next">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -61,7 +62,10 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="toolbar">
+       <layout class="QHBoxLayout" name="toolbar" stretch="0,0,0">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
         <item>
          <widget class="QPushButton" name="select_button">
           <property name="text">
@@ -81,6 +85,9 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::MinimumExpanding</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
             <width>40</width>
@@ -94,46 +101,16 @@
      </layout>
     </item>
     <item>
-     <widget class="QFrame" name="frame">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>1</verstretch>
-       </sizepolicy>
+     <layout class="QHBoxLayout" name="main_frame">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMaximumSize</enum>
       </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <property name="margin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QWebView" name="web_view">
-         <property name="font">
-          <font>
-           <family>Sans Serif</family>
-          </font>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
+     </layout>
     </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="status_bar"/>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QWebView</class>
-   <extends>QWidget</extends>
-   <header>QtWebKit/QWebView</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
