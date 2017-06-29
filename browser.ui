@@ -28,8 +28,7 @@
           </property>
           <property name="icon">
            <iconset theme="go-previous">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -43,8 +42,7 @@
           </property>
           <property name="icon">
            <iconset theme="go-next">
-            <normaloff/>
-           </iconset>
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
@@ -65,14 +63,14 @@
         <item>
          <widget class="QPushButton" name="select_button">
           <property name="text">
-           <string>Selecionar</string>
+           <string>Select</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="save_button">
           <property name="text">
-           <string>Salvar</string>
+           <string>Save</string>
           </property>
          </widget>
         </item>
@@ -94,33 +92,13 @@
      </layout>
     </item>
     <item>
-     <widget class="QFrame" name="frame">
+     <widget class="QWebEngineView" name="web_view" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>1</verstretch>
        </sizepolicy>
       </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <property name="margin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QWebView" name="web_view">
-         <property name="font">
-          <font>
-           <family>Sans Serif</family>
-          </font>
-         </property>
-        </widget>
-       </item>
-      </layout>
      </widget>
     </item>
    </layout>
@@ -129,9 +107,10 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QWebView</class>
+   <class>QWebEngineView</class>
    <extends>QWidget</extends>
-   <header>QtWebKit/QWebView</header>
+   <header>qwebengineview.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -3,7 +3,7 @@
 import pdb
 import sys
 
-from PyQt4.QtCore import pyqtRemoveInputHook
+from PyQt5.QtCore import pyqtRemoveInputHook
 
 def pyqt_set_trace():
     pyqtRemoveInputHook()

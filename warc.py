@@ -11,7 +11,7 @@ from hanzo.httptools import ResponseMessage
 CONFORMS_TO = "http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf"
 
 class Warc(object):
-    MAIN_URL = "WARC-X-Main-URL"
+    MAIN_URL = b"WARC-X-Main-URL"
 
     _main_url = None
     _file_name = None
@@ -97,8 +97,8 @@ class Warc(object):
             (WarcRecord.TYPE, WarcRecord.WARCINFO),
             (WarcRecord.ID, WarcRecord.random_warc_uuid()),
             (WarcRecord.DATE, warc.warc_datetime_str(datetime.utcnow())),
-            (WarcRecord.FILENAME, os.path.basename(self._file_name)),
-            (Warc.MAIN_URL, self._main_url),
+            (WarcRecord.FILENAME, bytes(os.path.basename(self._file_name).encode("utf-8"))),
+            (Warc.MAIN_URL, bytes(self._main_url.encode("utf-8"))),
         ]
 
         warcinfo_fields = "\r\n".join([
@@ -106,9 +106,9 @@ class Warc(object):
             "format: WARC File Format 1.0",
             "conformsTo: " + CONFORMS_TO,
             "robots: unknown",
-        ])
+        ]).encode("utf-8")
 
-        warcinfo_content = ("application/warc-fields", warcinfo_fields)
+        warcinfo_content = (b"application/warc-fields", bytes(warcinfo_fields))
 
         warcinfo_record = WarcRecord(headers=warcinfo_headers, \
                 content=warcinfo_content)

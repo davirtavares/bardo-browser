@@ -1,0 +1,33 @@
+./configure -prefix /home/davi/Dropbox/Projects/python/bardo-pageloader/env-dbg/opt -debug -no-openssl -opensource -nomake examples -nomake tests -confirm-license -developer-build
+
+Use of proxy/webservice
+
+- We are going to use mitmproxy
+- The proxy/interceptor will filter transparently all the requests
+  - Archive to WARC / Load from WARC
+  - https://doc.qt.io/qt-5/qtwebengine-overview.html#proxy-support
+- We can intercept JS at different levels (something like Chrome content scripts)
+  - http://doc.qt.io/qt-5/qtwebchannel-javascript.html
+  - http://doc.qt.io/qt-5/qtwebengine-overview.html#script-injection
+  - http://doc.qt.io/qt-5/qwebenginescript.html#details
+  - http://doc.qt.io/qt-5/qwebenginescript.html#ScriptWorldId-enum
+- For communication from Qt to Python
+  - http://doc.qt.io/qt-5/qtwebchannel-javascript.html
+  - https://stackoverflow.com/questions/31928444/qt-qwebenginepagesetwebchannel-transport-object
+  - https://stackoverflow.com/questions/28565254/how-to-use-qt-webengine-and-qwebchannel
+  - https://www.youtube.com/watch?v=KnvnTi6XafA
+  - https://stackoverflow.com/questions/39544089/how-can-i-access-python-code-from-javascript-in-pyqt-5-7
+  - https://github.com/qt/qtwebchannel/blob/dev/src/webchannel/qwebchannel.js
+
+Next steps:
+
+- Build PyQt5 - OK
+- Create a basic example of a browser using webengine - OK
+  - http://doc.qt.io/qt-5/qtwebengine-index.html
+  - https://stackoverflow.com/questions/37754138/how-to-render-html-with-pyqt5s-qwebengineview
+  - https://riverbankcomputing.com/pipermail/pyqt/2015-January/035324.html
+  - https://github.com/alandmoore/admbrowser/blob/master/browser.py
+- MITM example - OK
+- WARC load/archive
+- Internal API exposed
+- TBD
